@@ -2,7 +2,3 @@ dash
 plotly
 pandas
 gunicorn
-numpy
-matplotlib
-calmap
-os
