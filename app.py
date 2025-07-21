@@ -1,10 +1,9 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import calmap # pip install calmap
+import calmap
 import dash
 from dash import html
-import base64
 import os
 
 # --- Load and preprocess data ---
@@ -15,17 +14,24 @@ df.set_index("Date", inplace=True)
 df = df.asfreq("D")
 df.fillna(0, inplace=True)
 
-# --- Ensure folders exist ---
-os.makedirs("heatmaps", exist_ok=True)
-image_folder = "select_images"
+# --- Ensure heatmaps are saved into assets ---
+os.makedirs("assets/heatmaps", exist_ok=True)
+os.makedirs("assets/select_images", exist_ok=True)
 
-# --- Encode image files ---
-def encode_image(image_file):
-    with open(image_file, "rb") as f:
-        encoded = base64.b64encode(f.read()).decode()
-    return f"data:image/png;base64,{encoded}"
+# --- Generate calendar heatmaps ---
+for col in df.columns:
+    fig = calmap.calendarplot(
+        df[col],
+        cmap="YlGnBu",
+        fillcolor="lightgray",
+        linewidth=0.5,
+        fig_kws={"figsize": (14, 4)}
+    )
+    plt.suptitle(f"Calendar Heatmap: {col}", fontsize=16)
+    plt.savefig(f"assets/heatmaps/{col}_calendar_heatmap.png", bbox_inches='tight')
+    plt.close()
 
-# --- Generate calendar heatmaps and collect layout ---
+# --- Build Dash layout ---
 app = dash.Dash(__name__)
 app.title = "Creek Cam Calendar Heatmaps"
 server = app.server
@@ -33,47 +39,24 @@ server = app.server
 heatmap_divs = []
 
 for col in df.columns:
-    # Plot and save calendar heatmap
-    fig = calmap.calendarplot(
-        df[col],
-        cmap="YlGnBu",
-        fillcolor="lightgray",
-        linewidth=0.5,
-        fig_kws=dict(figsize=(14, 4))
-    )
-    plt.suptitle(f"Calendar Heatmap: {col}", fontsize=16)
-    heatmap_path = f"heatmaps/{col}_calendar_heatmap.png"
-    plt.savefig(heatmap_path)
-    plt.close()
+    heatmap_path = f"/assets/heatmaps/{col}_calendar_heatmap.png"
+    ref_image_path = f"/assets/select_images/{col}.jpg"
 
-    # Add corresponding reference image if available
-    col_image_path = os.path.join(image_folder, f"{col}.jpg")
-    image_components = []
+    components = [html.H3(f"Calendar Heatmap: {col}", style={"textAlign": "center"})]
 
-    if os.path.exists(col_image_path):
-        encoded_col_image = encode_image(col_image_path)
-        image_components.append(html.Img(
-            src=encoded_col_image,
-            style={"width": "100%", "height": "auto", "marginBottom": "20px"}
-        ))
+    if os.path.exists(f"assets/select_images/{col}.jpg"):
+        components.append(html.Img(src=ref_image_path, style={"width": "100%", "marginBottom": "20px"}))
 
-    # Encode heatmap
-    encoded_heatmap = encode_image(heatmap_path)
+    components.append(html.Img(src=heatmap_path, style={"width": "100%"}))
 
-    # Build div
-    heatmap_divs.append(html.Div([
-        html.H3(f"Calendar Heatmap: {col}", style={"textAlign": "center"}),
-        *image_components,
-        html.Img(src=encoded_heatmap, style={"width": "100%", "height": "auto"})
-    ], style={"marginBottom": "50px"}))
+    heatmap_divs.append(html.Div(components, style={"marginBottom": "50px"}))
 
-# --- App Layout ---
+# --- Layout ---
 app.layout = html.Div([
     html.H1("Creek Cam Calendar Heatmaps", style={"textAlign": "center"}),
     *heatmap_divs
 ])
 
-# --- Run ---
 if __name__ == "__main__":
     app.run_server(debug=True)
 
