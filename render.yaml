@@ -3,5 +3,5 @@ services:
     name: creek-cam-heatmap
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
+    startCommand: gunicorn app:app.server
     plan: free
