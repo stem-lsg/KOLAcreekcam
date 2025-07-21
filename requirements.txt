@@ -1,5 +1,4 @@
---only-binary=:all:
-dash==2.15.0
-plotly==5.22.0
-pandas==2.2.3
-gunicorn==21.2.0
+dash
+plotly
+pandas
+gunicorn
