@@ -14,6 +14,7 @@ data = pd.DataFrame({
 # Dash app instance
 app = dash.Dash(__name__)
 app.title = "Barebones Heatmap Test"
+server = app.server
 
 # Basic calendar-style heatmap
 data["Week"] = data["Date"].dt.isocalendar().week
