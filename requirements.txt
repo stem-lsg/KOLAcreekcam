@@ -2,3 +2,8 @@ dash
 plotly
 pandas
 gunicorn
+numpy
+matplotlib
+calmap
+base64
+os
